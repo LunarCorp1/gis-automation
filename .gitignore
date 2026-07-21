@@ -4,3 +4,5 @@ __pycache__/
 output/
 .superpowers/
 *.geojson
+symbology-style.db
+*.db
