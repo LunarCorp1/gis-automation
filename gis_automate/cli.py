@@ -11,16 +11,16 @@ def cli():
 @cli.command()
 @click.argument("shapefile", type=click.Path(exists=True))
 @click.option("--format", "-f", type=click.Choice(["pdf", "png"]), default="pdf")
+@click.option("--title", "-t", default=None, help="Map title text")
 @click.option("--style", "-s", type=click.Path(exists=True), default=None)
-@click.option("--layout", "-l", type=click.Path(exists=True), default=None)
 @click.option("--output", "-o", type=click.Path(), default=None)
-def map(shapefile, format, style, layout, output):
-    """Export a static map from a shapefile to PDF or PNG."""
+def map(shapefile, format, title, style, output):
+    """Export a cartographic map from a shapefile to PDF or PNG."""
     from .commands.map_command import run_map
     engine = QGISEngine()
     engine.init_qgis()
     try:
-        run_map(shapefile, format, style, layout, output)
+        run_map(shapefile, fmt=format, title=title, style=style, output=output)
     finally:
         engine.close()
 
