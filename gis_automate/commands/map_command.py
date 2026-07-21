@@ -4,6 +4,23 @@ from ..engine import QGISEngine
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "output" / "static"
 
+QGIS_SVG = r"C:\Program Files\QGIS 3.40.1\apps\qgis\svg"
+
+
+def _style_polygon_layer(layer):
+    from qgis.core import QgsFillSymbol, QgsSimpleFillSymbolLayer, QgsSingleSymbolRenderer
+    from qgis.PyQt.QtGui import QColor
+
+    fill = QgsSimpleFillSymbolLayer()
+    fill.setColor(QColor(255, 245, 230))
+    fill.setStrokeColor(QColor(60, 40, 20))
+    fill.setStrokeWidth(0.3)
+
+    symbol = QgsFillSymbol()
+    symbol.changeSymbolLayer(0, fill)
+    layer.setRenderer(QgsSingleSymbolRenderer(symbol))
+    layer.triggerRepaint()
+
 
 def run_map(
     shapefile: str,
@@ -36,10 +53,13 @@ def run_map(
 
         project = QgsProject.instance()
         project.removeAllMapLayers()
-        project.addMapLayer(layer)
 
         if style:
             layer.loadNamedStyle(style)
+        else:
+            _style_polygon_layer(layer)
+
+        project.addMapLayer(layer)
 
         auto_title = title or layer.name()
 
@@ -52,54 +72,70 @@ def run_map(
         page = layout.pageCollection().pages()[0]
         page.setPageSize("A4", QgsLayoutItemPage.Landscape)
 
+        page_width = 297.0
+        page_height = 210.0
+        margin = 8
+
         map_item = QgsLayoutItemMap(layout)
-        map_item.attemptMove(QgsLayoutPoint(10, 20))
-        map_item.attemptResize(QgsLayoutSize(190, 170))
+        map_item.attemptMove(QgsLayoutPoint(margin, 22))
+        map_item.attemptResize(QgsLayoutSize(178, page_height - 30))
         map_item.setExtent(layer.extent())
-        map_item.setBackgroundColor(QColor(255, 255, 255))
+        map_item.setBackgroundColor(QColor(230, 240, 250))
+        map_item.setFrameEnabled(True)
+        map_item.setFrameStrokeWidth(map_item.frameStrokeWidth())
+        map_item.setFrameStrokeColor(QColor(50, 50, 50))
         layout.addLayoutItem(map_item)
 
         title_item = QgsLayoutItemLabel(layout)
-        title_item.setText(auto_title)
+        title_item.setText(f"<h2>{auto_title}</h2>")
         title_item.setFont(QFont("Arial", 20, QFont.Weight.Bold))
+        title_item.setMode(QgsLayoutItemLabel.ModeHtml)
         title_item.adjustSizeToText()
-        title_item.attemptMove(QgsLayoutPoint(10, 2))
+        title_item.attemptMove(QgsLayoutPoint(margin, 1))
         layout.addLayoutItem(title_item)
+
+        right_x = margin + 178 + 5
+        right_w = page_width - right_x - margin
 
         legend = QgsLayoutItemLegend(layout)
         legend.setTitle("Legend")
-        legend.setStyleFont(QgsLegendStyle.Title, QFont("Arial", 10, QFont.Weight.Bold))
-        legend.setStyleFont(QgsLegendStyle.Subgroup, QFont("Arial", 8))
-        legend.setStyleFont(QgsLegendStyle.SymbolLabel, QFont("Arial", 8))
-        legend.attemptMove(QgsLayoutPoint(210, 20))
+        legend.setStyleFont(QgsLegendStyle.Title, QFont("Arial", 11, QFont.Weight.Bold))
+        legend.setStyleFont(QgsLegendStyle.Subgroup, QFont("Arial", 9))
+        legend.setStyleFont(QgsLegendStyle.SymbolLabel, QFont("Arial", 9))
+        legend.setColumnCount(1)
+        legend.attemptMove(QgsLayoutPoint(right_x, 22))
+        legend.attemptResize(QgsLayoutSize(right_w, 50))
         layout.addLayoutItem(legend)
 
         scale_bar = QgsLayoutItemScaleBar(layout)
-        scale_bar.setStyle("Numeric")
+        scale_bar.setStyle("Line Ticks Up")
         scale_bar.setLinkedMap(map_item)
         scale_bar.applyDefaultSize()
         scale_bar.setFont(QFont("Arial", 7))
-        scale_bar.setNumberOfSegments(2)
-        scale_bar.setNumberOfSegmentsLeft(1)
-        scale_bar.attemptMove(QgsLayoutPoint(10, 192))
+        scale_bar.setNumberOfSegments(3)
+        scale_bar.setNumberOfSegmentsLeft(0)
+        scale_bar.attemptMove(QgsLayoutPoint(margin, page_height - margin - 8))
+        scale_bar.attemptResize(QgsLayoutSize(80, 10))
         layout.addLayoutItem(scale_bar)
 
-        north_svg = Path(__file__).resolve().parent.parent.parent / "gis_automate" / "templates" / "north.svg"
-        if not north_svg.exists():
-            north_svg.parent.mkdir(parents=True, exist_ok=True)
-            north_svg.write_text("""<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <polygon points="50,2 42,35 50,30 58,35" fill="#333"/>
-  <polygon points="50,2 42,35 50,40 58,35" fill="#999"/>
-  <polygon points="42,35 50,40 50,98 42,65" fill="#999"/>
-  <polygon points="58,35 50,40 50,98 58,65" fill="#ccc"/>
-  <text x="50" y="13" font-family="Arial" font-size="10" font-weight="bold" text-anchor="middle" fill="#fff">N</text>
-</svg>""")
+        north_path = str(Path(QGIS_SVG) / "arrows" / "NorthArrow_02.svg")
         north = QgsLayoutItemPicture(layout)
-        north.setPicturePath(str(north_svg))
-        north.attemptMove(QgsLayoutPoint(210, 170))
-        north.attemptResize(QgsLayoutSize(20, 20))
+        north.setPicturePath(north_path)
+        north.attemptMove(QgsLayoutPoint(right_x, 100))
+        north.attemptResize(QgsLayoutSize(24, 24))
+        north.setFrameEnabled(False)
         layout.addLayoutItem(north)
+
+        credit = QgsLayoutItemLabel(layout)
+        credit.setText("Generated with GIS Automate")
+        credit.setFont(QFont("Arial", 6))
+        credit.setFontColor(QColor(150, 150, 150))
+        credit.adjustSizeToText()
+        credit.attemptMove(QgsLayoutPoint(
+            page_width - margin - credit.sizeWithUnits().width(),
+            page_height - margin - 3,
+        ))
+        layout.addLayoutItem(credit)
 
         if fmt == "pdf":
             exporter = QgsLayoutExporter(layout)
