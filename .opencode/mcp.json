@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gis-automation": {
+      "command": "C:\\Users\\LUNAR\\Desktop\\gis\\mcp-server\\run_mcp.bat",
+      "type": "stdio"
+    }
+  }
+}

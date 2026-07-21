@@ -69,6 +69,14 @@ def batch(directory, format, recursive, style, output):
         engine.close()
 
 
+@cli.command()
+@click.argument("shapefile", type=click.Path(exists=True))
+def info(shapefile):
+    """Print layer metadata as JSON."""
+    from .commands.info_command import run_info
+    print(run_info(shapefile))
+
+
 @cli.command("list")
 @click.argument("directory", type=click.Path(exists=True), default=r"C:\Users\LUNAR\Desktop\SHAPEFILES")
 def list_shp(directory):
