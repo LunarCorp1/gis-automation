@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
@@ -10,10 +12,10 @@ QGIS_BIN = QGIS_INSTALL / "apps" / "qgis" / "bin"
 
 
 class QGISEngine:
-    def __init__(self):
+    def __init__(self) -> None:
         self._app = None
 
-    def init_qgis(self):
+    def init_qgis(self) -> None:
         if self._app is not None:
             return
         os.environ["PYTHONHOME"] = str(QGIS_PYTHON)
@@ -24,12 +26,17 @@ class QGISEngine:
         os.environ["PATH"] = f"{qgis_path};{python_bin};{env_path}"
         if str(QGIS_PYTHONPATH) not in sys.path:
             sys.path.insert(0, str(QGIS_PYTHONPATH))
-        from qgis.core import QgsApplication
+        try:
+            from qgis.core import QgsApplication
 
-        self._app = QgsApplication([], False)
+            self._app = QgsApplication([], False)
+        except Exception as exc:
+            raise RuntimeError(
+                f"QGIS engine failed to initialize: {exc}"
+            ) from exc
         self._app.initQgis()
 
-    def load_layer(self, shapefile_path: str):
+    def load_layer(self, shapefile_path: str) -> QgsVectorLayer:
         from qgis.core import QgsVectorLayer
 
         path = str(Path(shapefile_path).resolve())
@@ -39,6 +46,7 @@ class QGISEngine:
             raise ValueError(f"Failed to load layer: {shapefile_path}")
         return layer
 
-    def close(self):
+    def close(self) -> None:
         if self._app:
             self._app.exitQgis()
+            self._app = None

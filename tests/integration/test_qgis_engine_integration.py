@@ -46,7 +46,7 @@ except ValueError:
 
 # Test 5: close
 engine.close()
-print("  PASS: close() succeeds")
+check(engine._app is None, "close() resets _app to None")
 
 print(f"\n{'='*40}")
 if errors:
