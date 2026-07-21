@@ -29,10 +29,9 @@ def run_map(
             QgsLayoutSize,
             QgsLayoutPoint,
             QgsUnitTypes,
-            QgsFillSymbol,
-            QgsSimpleFillSymbolLayer,
+            QgsLayoutItemPage,
+            QgsLegendStyle,
         )
-        from qgis.PyQt.QtCore import QRectF, QSizeF
         from qgis.PyQt.QtGui import QFont, QColor
 
         project = QgsProject.instance()
@@ -50,13 +49,8 @@ def run_map(
         layout = QgsLayout(project)
         layout.initializeDefaults()
         layout.setUnits(QgsUnitTypes.LayoutMillimeters)
-        layout.pageCollection().pages().clear()
-        layout.pageCollection().beginPageSizeChange()
-        page = layout.pageCollection().addPage()
-        page.setPageSize("A4", QgsLayoutSize.Orientation.Landscape)
-        layout.pageCollection().endPageSizeChange()
-        page_width = 297.0
-        page_height = 210.0
+        page = layout.pageCollection().pages()[0]
+        page.setPageSize("A4", QgsLayoutItemPage.Landscape)
 
         map_item = QgsLayoutItemMap(layout)
         map_item.attemptMove(QgsLayoutPoint(10, 20))
@@ -74,8 +68,9 @@ def run_map(
 
         legend = QgsLayoutItemLegend(layout)
         legend.setTitle("Legend")
-        legend.setFont(QFont("Arial", 8))
-        legend.setStyleFont(QgsLayoutItemLegend.FontStyle.Title, QFont("Arial", 10, QFont.Weight.Bold))
+        legend.setStyleFont(QgsLegendStyle.Title, QFont("Arial", 10, QFont.Weight.Bold))
+        legend.setStyleFont(QgsLegendStyle.Subgroup, QFont("Arial", 8))
+        legend.setStyleFont(QgsLegendStyle.SymbolLabel, QFont("Arial", 8))
         legend.attemptMove(QgsLayoutPoint(210, 20))
         layout.addLayoutItem(legend)
 
