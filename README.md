@@ -16,11 +16,13 @@ launch.bat -m gis_automate map "C:\path\to\shapefile.shp" --format png
 
 ## Commands
 
-### `map` — Export static map
+### `map` — Export cartographic map
 
 ```batch
-launch.bat -m gis_automate map <shapefile> [--format pdf|png] [--style style.qml] [--output out.pdf]
+launch.bat -m gis_automate map <shapefile> [--format pdf|png] [--title "Title"] [--style style.qml] [--output out.pdf]
 ```
+
+Generates a proper map layout with **title**, **legend**, **scale bar**, and **north arrow**.
 
 ### `web` — Generate interactive web map
 
